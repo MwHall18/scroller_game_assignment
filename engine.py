@@ -218,9 +218,7 @@ class GameEngine():
             for tile in self.groups['obstacle']:
                 if tile.rect.colliderect(bullet.rect):
                     if bullet.owner == "player" and not bullet.ricocheted:
-                        bullet.direction *= -1      #reverse the bullet direction
-                        bullet.rect.y -= 10 #Add bounce effect
-                        bullet.ricocheted = True
+                        bullet.kill()
                     else:
                         bullet.kill()
                     break  # stop checking once handled

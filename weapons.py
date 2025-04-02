@@ -73,11 +73,8 @@ class Bullet(pygame.sprite.Sprite):
         if not Bullet.image or not Bullet.sound_fx:
             Bullet.load_assets()
 
-        self.vel_x = ENVIRONMENT.BULLET_VELOCITY_X
-        if owner == "player":
-            self.damage = ENVIRONMENT.PLAYER_BULLET_FULL_DAMAGE
-        else:    
-            self.damage = ENVIRONMENT.BULLET_FULL_DAMAGE
+        self.vel_x = ENVIRONMENT.BULLET_VELOCITY_X  
+        self.damage = ENVIRONMENT.BULLET_FULL_DAMAGE
         self.direction = direction
         self.owner = owner  #player or enemy
         self.ricocheted = False

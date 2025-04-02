@@ -20,9 +20,10 @@ class EnvironmentSettings:
     GRAVITY = 0.75
     SOLDIER_JUMP_STRENGTH = -13
     BULLET_FULL_DAMAGE = 25
+    PLAYER_BULLET_FULL_DAMAGE = 50
     BULLET_VELOCITY_X = 15
-    GRENADE_FULL_DAMAGE = 100
-    GRENADE_INNER_RADIUS = 50  # pixels from grenade
+    GRENADE_FULL_DAMAGE = 200
+    GRENADE_INNER_RADIUS = 75  # pixels from grenade
     GRENADE_OUTER_RADIUS = 200 # pixels from grenade
     GRENADE_VELOCITY_X = 7
     GRENADE_VELOCITY_Y = -11
@@ -33,10 +34,6 @@ class EnvironmentSettings:
     SOLDIER_THROW_DELAY = 2000
     SOLDIER_SCALE = 1.65
     ANIMATION_DELAY = 100
-
-    # Fall damage
-    SAFE_FALL_HEIGHT = 200 #  < value is safe
-    FALL_DAMAGE_MULTIPLIER = 0.25 # damage multiplier
 
 # TODO: define TILE_SIZE from the image dimensions instead of hardcoded value
 @dataclass(frozen=True)
@@ -67,7 +64,7 @@ class ColorSettings:
     WHITE = (255, 255, 255)
     GREEN = (0, 255, 0)
     PINK = (235, 65, 54)
-    RED = (255, 0, 0)   
+    RED = (255, 0, 0)    
 
 # Regenerating health mod
 @dataclass(frozen=True)

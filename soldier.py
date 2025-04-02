@@ -94,19 +94,11 @@ class Soldier(pygame.sprite.Sprite):
         self.rect.height -= 2
         self.rect.center = (x, y)
 
-        # Fall damage
-        self.fall_start_y = 0
-        self.falling = False # True if falling
-        self.safe_fall_height = 200
-        self.fall_damage_multiplier = 0.25
-
         # Health regeneration
         self.max_health = health
         self.last_damage_time = 0  # timestamp
         self.regen_timer = 0  # Frames since last regen
         self.regen_active = False
-
-
 
     def update(self):
         '''
@@ -167,17 +159,6 @@ class Soldier(pygame.sprite.Sprite):
             self.vel_y = ENVIRONMENT.SOLDIER_JUMP_STRENGTH
             self.in_air = True
 
-            # No fall jump
-            self.in_air = True
-            self.jump = True
-
-        # Cancel jump if button released mid-jump
-        if not jump_cmd and self.jump:
-
-            # If still moving up, take away velocity
-            if self.vel_y < -5:
-                self.vel_y = -5
-
         # Handle lateral movement
         if mleft_cmd and not mright_cmd:
             self.direction = Direction.LEFT
@@ -197,19 +178,7 @@ class Soldier(pygame.sprite.Sprite):
         self.vel_y = 0
         self.in_air = False
 
-        # Fall damage
-        if self.falling:
-
-            # Fall damage = distance of current y and starting y
-            fall_distance = abs(self.rect.y - self.fall_start_y)
-
-            # If the fall damage is > safe, make player take damage
-            if hasattr(self, 'safe_fall_height') and fall_distance > self.safe_fall_height:
-                damage = int((fall_distance - self.safe_fall_height) * self.fall_damage_multiplier)
-                self.health -= damage
-            self.falling = False
-
-    def shoot(self, obstacle_group):
+    def shoot(self):
         '''
         Shoots a bullet if the Soldier has one. This function calculates the 
         physical xy-location bullet and its direction of travel. The physics
@@ -225,7 +194,7 @@ class Soldier(pygame.sprite.Sprite):
             self.shoot_time = get_ticks()
             x = self.rect.centerx + (30 * self.direction) # 30 is hack
             y = self.rect.centery
-            return Bullet(x, y, self.direction, obstacle_group)
+            return Bullet(x, y, self.direction, owner="player")
         else:
             return None
 
@@ -284,6 +253,17 @@ class Enemy(Soldier):
 
         # Regen
         self.can_regen = False
+        
+    def shoot(self):
+        if (self.ammo > 0 
+                and get_ticks() > self.shoot_time + self.shoot_delay):
+            self.ammo -= 1
+            self.shoot_time = get_ticks()
+            x = self.rect.centerx + (30 * self.direction) # 30 is hack
+            y = self.rect.centery
+            return Bullet(x, y, self.direction, owner="enemy")
+        else:
+            return None
 
     def ai_move(self, world_map, tile_size, movement_limit=200):
         '''
@@ -351,12 +331,6 @@ class Enemy(Soldier):
         if hasattr(self, 'regen_active'):
             self.regen_active = False
 
-    # Fall damage
-    def landed(self, impact_velocity):
-        """ Override enemy to not take fall damage """
-        self.vel_y = 0
-        self.in_air = False
-        self.falling = False
 
 class Player(Soldier):
     '''
@@ -373,7 +347,7 @@ class Player(Soldier):
         self.animations = Soldier.animations['player']
         self.shoot_delay = ENVIRONMENT.PLAYER_SHOOT_DELAY
         self.throw_delay = ENVIRONMENT.PLAYER_THROW_DELAY
-        self.shooting = False
+        self.safe_landing_speed = 17 #Highest speed player can land without taking damage.
 
         # Regen
         self.regen_rate = 1  # HP/sec

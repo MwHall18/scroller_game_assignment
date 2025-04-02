@@ -163,18 +163,13 @@ class GameEngine():
         # game engine knows about the bullet and grenade groups.
         self.player.move(controller.mleft, controller.mright, controller.jump)
         if controller.shoot:
-            bullet = self.player.shoot(self.groups['obstacle'])
+            bullet = self.player.shoot()
             if bullet:
                 self.groups['bullet'].add(bullet)
-                self.player.shooting = True
         if controller.throw:
             grenade = self.player.throw()
             if grenade:
                 self.groups['grenade'].add(grenade)
-
-        bullet = self.player.shoot(self.groups['obstacle']) 
-        if bullet:
-            self.groups['bullet'].add(bullet)
 
     def enemy_actions(self):
         '''
@@ -183,17 +178,13 @@ class GameEngine():
         # We keep dead enemies on the screen; only let live ones to do things
         for enemy in self.groups['enemy']:
             if enemy.alive:
-                if enemy.vision.colliderect(self.player.rect) and abs(enemy.rect.centery - self.player.rect.centery) < 50: # add verticle check
-                    bullet = enemy.shoot(self.groups['obstacle'])
+                if enemy.vision.colliderect(self.player.rect):
+                    bullet = enemy.shoot()
                     if bullet:
                         self.groups['bullet'].add(bullet)
                 enemy.ai_move(self.world_data, TILEMAP.TILE_SIZE)
                 if enemy.health <= 0:
-                    enemy.death()  
-
-        bullet = enemy.shoot(self.groups['obstacle']) 
-        if bullet:
-            self.groups['bullet'].add(bullet)             
+                    enemy.death()               
 
     def collect_item_boxes(self):
         ''' 
@@ -221,6 +212,18 @@ class GameEngine():
                 if enemy.health >= 0:
                     enemy.health -= bullet.damage
                     bullet.kill()
+        
+        #New code when bullet its ground.
+        for bullet in list(self.groups['bullet']):
+            for tile in self.groups['obstacle']:
+                if tile.rect.colliderect(bullet.rect):
+                    if bullet.owner == "player" and not bullet.ricocheted:
+                        bullet.direction *= -1      #reverse the bullet direction
+                        bullet.rect.y -= 10 #Add bounce effect
+                        bullet.ricocheted = True
+                    else:
+                        bullet.kill()
+                    break  # stop checking once handled
     
     def make_grenades_explode(self):
         '''
@@ -277,13 +280,6 @@ class GameEngine():
         sprite.vel_y = min(20, sprite.vel_y)
         sprite.dy = int(sprite.vel_y)
 
-        # Fall damage
-        # if sprite is moving down and wasn't falling before, create the falling effect and take starting position
-        if hasattr(sprite, 'falling'): 
-            if sprite.vel_y > 0 and not sprite.falling:  
-                sprite.falling = True
-                sprite.fall_start_y = sprite.rect.y
-        
         # Calculate lateral movement
         sprite.dx = int(sprite.vel_x * sprite.direction.value)
 
@@ -303,7 +299,15 @@ class GameEngine():
                 if sprite.vel_y < 0: # jumping and hitting head
                     sprite.dy = tile.rect.bottom - sprite.rect.top
                 if sprite.vel_y > 0:
-                    sprite.landed(sprite.vel_y)
+                    impact_velocity = sprite.vel_y
+                    sprite.landed(impact_velocity)
+                    
+                    #Apply fall damage only to the player 
+                    if isinstance(sprite, Player):
+                        if impact_velocity > sprite.safe_landing_speed:
+                            fall_damage = int((impact_velocity - sprite.safe_landing_speed) * 10)  #adjust multiplier
+                            sprite.health -= fall_damage
+                                        
                     sprite.dy = tile.rect.top - sprite.rect.bottom
                 sprite.vel_y = 0
 
@@ -313,6 +317,10 @@ class GameEngine():
             or (sprite.direction == Direction.LEFT
                 and sprite.rect.left <= 0)):
             sprite.dx = 0
+            
+        #If falling and not already marked as in air
+        if sprite.dy > 0 and not sprite.in_air:
+            sprite.in_air = True
 
         # Move the sprite
         sprite.rect.x += sprite.dx

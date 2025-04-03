@@ -350,5 +350,5 @@ class Player(Soldier):
         self.safe_landing_speed = 17 #Highest speed player can land without taking damage.
 
         # Regen
-        self.regen_rate = 1  # HP/sec
+        self.regen_rate = 5  # HP/sec
         self.regen_delay = 3000  # ms

@@ -70,7 +70,7 @@ class ColorSettings:
 @dataclass(frozen=True)
 class GameSettings:
     REGEN_HEALTH = True
-    REGEN_RATE = 1 # HP/second
+    REGEN_RATE = 5 # HP/second
     REGEN_DELAY = 3000 # milliseconds delay
 
 # Initialize settings objects
